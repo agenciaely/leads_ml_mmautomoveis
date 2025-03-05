@@ -8,17 +8,17 @@ import os
 app = Flask(__name__)
 
 # Configuração do Google Sheets
-SHEET_ID = os.getenv("SHEET_ID")  # Pegando ID da planilha das variáveis de ambiente
+SHEET_ID = os.getenv("SHEET_ID")  
 
 # Carregar credenciais do ambiente (Render)
-GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")  # Variável de ambiente no Render
-CREDENTIALS = json.loads(GOOGLE_CREDENTIALS)  # Converte JSON para dict
+GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")  
+CREDENTIALS = json.loads(GOOGLE_CREDENTIALS)  
 
 # Autenticação com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(CREDENTIALS, scope)
 client = gspread.authorize(creds)
-sheet = client.open_by_key(SHEET_ID).sheet1  # Usamos a primeira aba da planilha
+sheet = client.open_by_key(SHEET_ID).sheet1 
 
 @app.route("/")
 def home():
@@ -28,10 +28,17 @@ def home():
 def receber_lead():
     data = request.json
 
-    # Captura a data/hora exata da requisição
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Formato mais claro
+    # ✅ LOG para verificar o que o Mercado Livre está enviando
+    print("📩 Dados Recebidos do Mercado Livre:", data)
 
-    # Pegando informações do lead com valores padrão para evitar valores None
+    # Salvar os dados recebidos em um arquivo de log no servidor para análise
+    with open("log_mercado_livre.txt", "a") as log_file:
+        log_file.write(json.dumps(data, indent=4) + "\n")
+
+    # Captura a data/hora exata da requisição
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Pegando informações do lead com valores padrão
     lead_name = data.get("name", "Desconhecido")
     phone = data.get("phone", "Não informado")
     vehicle = data.get("vehicle", "Não informado")
