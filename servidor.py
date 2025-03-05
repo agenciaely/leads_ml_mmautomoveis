@@ -2,16 +2,21 @@ from flask import Flask, request, jsonify
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+import json
+import os
 
 app = Flask(__name__)
 
 # Configuração do Google Sheets
-SHEET_ID = "1idSwyvj6B-pVA0DQ2D9Tc7R8fq6PnJHcMR4EkkC-4Hg"
-CREDENTIALS_FILE = "credentials.json"  # Arquivo de credenciais armazenado no Render
+SHEET_ID = os.getenv("SHEET_ID")  # Pegando ID da planilha das variáveis de ambiente
+
+# Carregar credenciais do ambiente (Render)
+GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")  # Variável de ambiente no Render
+CREDENTIALS = json.loads(GOOGLE_CREDENTIALS)  # Converte JSON para dict
 
 # Autenticação com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(CREDENTIALS, scope)
 client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).sheet1  # Usamos a primeira aba da planilha
 
@@ -23,20 +28,34 @@ def home():
 def receber_lead():
     data = request.json
 
+    # Captura a data/hora exata da requisição
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # Pegando informações do lead
     lead_name = data.get("name", "Desconhecido")
     phone = data.get("phone", "Não informado")
     vehicle = data.get("vehicle", "Não informado")
-    cpf = data.get("cpf", "Não informado")  # Adicionando CPF
-    question = data.get("question", "Nenhuma pergunta feita")  # Pergunta realizada
-    financing = data.get("financing", "Não informado")  # Se simulou financiamento
-    contact_whatsapp = data.get("whatsapp", "Não entrou")  # Se entrou em contato via WhatsApp
+    date = data.get("date", "Não informado")
+    cpf = data.get("cpf", "Não informado")
+    question = data.get("question", "Nenhuma pergunta feita")
+    financing_requested = "Sim" if data.get("financing_requested") else "Não"
+    whatsapp_clicked = "Sim" if data.get("whatsapp_clicked") else "Não"
 
-    # Registrando a data e hora do recebimento
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Criando a linha de dados na ordem correta
+    lead = [
+        timestamp,  # Coluna A - Data/Hora
+        lead_name,  # Coluna B - Nome
+        phone,  # Coluna C - Telefone
+        vehicle,  # Coluna D - Veículo
+        date,  # Coluna E - Data de Interesse
+        cpf,  # Coluna F - CPF
+        question,  # Coluna G - Pergunta Feita
+        financing_requested,  # Coluna H - Solicitou Financiamento?
+        whatsapp_clicked,  # Coluna I - Clicou no WhatsApp?
+        "Mercado Livre"  # Coluna J - Origem do Lead
+    ]
 
     # Adicionar os dados na planilha
-    lead = [timestamp, lead_name, phone, vehicle, cpf, question, financing, contact_whatsapp, "Mercado Livre"]
     sheet.append_row(lead)
 
     return jsonify({"message": "Lead salvo no Google Sheets!"}), 200
