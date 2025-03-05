@@ -31,7 +31,7 @@ def receber_lead():
     # Captura a data/hora exata da requisição
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Pegando informações do lead
+    # Pegando informações do lead com valores padrão para evitar valores None
     lead_name = data.get("name", "Desconhecido")
     phone = data.get("phone", "Não informado")
     vehicle = data.get("vehicle", "Não informado")
@@ -40,23 +40,24 @@ def receber_lead():
     question = data.get("question", "Nenhuma pergunta feita")
     financing_requested = "Sim" if data.get("financing_requested") else "Não"
     whatsapp_clicked = "Sim" if data.get("whatsapp_clicked") else "Não"
+    source = "Mercado Livre"
 
     # Criando a linha de dados na ordem correta
     lead = [
-        timestamp,  # Coluna A - Data/Hora
-        lead_name,  # Coluna B - Nome
-        phone,  # Coluna C - Telefone
-        vehicle,  # Coluna D - Veículo
-        date,  # Coluna E - Data de Interesse
-        cpf,  # Coluna F - CPF
-        question,  # Coluna G - Pergunta Feita
+        timestamp,        # Coluna A - Data/Hora
+        lead_name,        # Coluna B - Nome
+        phone,            # Coluna C - Telefone
+        vehicle,          # Coluna D - Veículo
+        date,             # Coluna E - Data de Interesse
+        cpf,              # Coluna F - CPF
+        question,         # Coluna G - Pergunta Feita
         financing_requested,  # Coluna H - Solicitou Financiamento?
-        whatsapp_clicked,  # Coluna I - Clicou no WhatsApp?
-        "Mercado Livre"  # Coluna J - Origem do Lead
+        whatsapp_clicked,     # Coluna I - Clicou no WhatsApp?
+        source            # Coluna J - Origem do Lead
     ]
 
     # Adicionar os dados na planilha
-    sheet.append_row(lead)
+    sheet.append_row(lead, value_input_option="RAW")
 
     return jsonify({"message": "Lead salvo no Google Sheets!"}), 200
 
