@@ -29,7 +29,7 @@ def receber_lead():
     data = request.json
 
     # Captura a data/hora exata da requisição
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Formato mais claro
 
     # Pegando informações do lead com valores padrão para evitar valores None
     lead_name = data.get("name", "Desconhecido")
