@@ -1,16 +1,23 @@
 from flask import Flask, request, jsonify
+import os
 import gspread
+import json
 from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
 # Configuração do Google Sheets
-SHEET_ID = "1idSwyvj6B-pVA0DQ2D9Tc7R8fq6PnJHcMR4EkkC-4Hg"  # ID da sua planilha
-CREDENTIALS_FILE = r"C:\Users\Usuario\Documents\Python\MM Automoveis\Integrações\importar\credentials.json"
+SHEET_ID = os.getenv("SHEET_ID")  # ID da sua planilha do Google Sheets
+CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS")  # Credenciais do Google em formato JSON
 
-# Autenticação com Google Sheets
+# Verifica se as credenciais foram carregadas corretamente
+if not CREDENTIALS_JSON:
+    raise ValueError("As credenciais do Google não foram carregadas. Verifique as variáveis de ambiente.")
+
+# Autenticação com Google Sheets usando as credenciais do ambiente
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+creds_dict = json.loads(CREDENTIALS_JSON)  # Converte a string JSON em um dicionário Python
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open_by_key(SHEET_ID).sheet1  # Usamos a primeira aba da planilha
 
